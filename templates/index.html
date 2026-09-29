@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Message Summary</title>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success-color: #16a34a;
+            --success-bg: #dcfce7;
+            --warning-color: #d97706;
+            --warning-bg: #fef3c7;
+            --danger-color: #dc2626;
+            --danger-bg: #fee2e2;
+            --radius: 12px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.5;
+            padding: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+
+        .btn-refresh {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-refresh:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-refresh:active {
+            transform: scale(0.98);
+        }
+
+        /* Status & Alert Containers */
+        .alert {
+            padding: 1rem 1.25rem;
+            border-radius: var(--radius);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 500;
+        }
+
+        .alert-danger {
+            background-color: var(--danger-bg);
+            color: var(--danger-color);
+            border: 1px solid #fca5a5;
+        }
+
+        .alert-empty {
+            background-color: var(--warning-bg);
+            color: var(--warning-color);
+            border: 1px solid #fcd34d;
+        }
+
+        .loading-spinner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 1rem;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Totals Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-card .label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .stat-card.accepted .value { color: var(--success-color); }
+        .stat-card.duplicates .value { color: var(--warning-color); }
+        .stat-card.errors .value { color: var(--danger-color); }
+
+        /* Section Layout */
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        /* Devices Grid / Table */
+        .devices-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .device-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            box-shadow: var(--shadow);
+        }
+
+        .device-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1rem;
+        }
+
+        .device-id {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.65rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-ok {
+            background-color: var(--success-bg);
+            color: var(--success-color);
+        }
+
+        .badge-error {
+            background-color: var(--danger-bg);
+            color: var(--danger-color);
+        }
+
+        .device-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .device-details .metric-label {
+            color: var(--text-secondary);
+        }
+
+        .device-details .metric-val {
+            font-weight: 600;
+            text-align: right;
+        }
+
+        /* Errors List */
+        .errors-list-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            box-shadow: var(--shadow);
+        }
+
+        .error-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+
+        .error-item:last-child {
+            border-bottom: none;
+        }
+
+        .error-tag {
+            font-family: monospace;
+            font-weight: 600;
+            color: var(--danger-color);
+            background: var(--danger-bg);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        /* Utility */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div>
+            <h1>Device Message Summary</h1>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">Real-time processing dashboard for simulated device messages</p>
+        </div>
+        <button class="btn-refresh" id="refreshBtn">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            Refresh Summary
+        </button>
+    </header>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="loading-spinner">
+        <div class="spinner"></div>
+        <p>Fetching latest device summary...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="errorAlert" class="alert alert-danger hidden">
+        <span id="errorMessage">Failed to load device summary.</span>
+    </div>
+
+    <!-- Empty Data State -->
+    <div id="emptyAlert" class="alert alert-empty hidden">
+        <span>No device messages found or file is empty.</span>
+    </div>
+
+    <!-- Main Dashboard Content -->
+    <main id="dashboardContent" class="hidden">
+        
+        <!-- Totals Cards -->
+        <section class="stats-grid">
+            <div class="stat-card accepted">
+                <div class="label">Accepted Messages</div>
+                <div class="value" id="valAccepted">0</div>
+            </div>
+            <div class="stat-card duplicates">
+                <div class="label">Duplicate Messages</div>
+                <div class="value" id="valDuplicates">0</div>
+            </div>
+            <div class="stat-card errors">
+                <div class="label">Errors Recorded</div>
+                <div class="value" id="valErrors">0</div>
+            </div>
+        </section>
+
+        <!-- Devices Section -->
+        <section style="margin-bottom: 2rem;">
+            <h2 class="section-title">Per-Device Statistics</h2>
+            <div class="devices-grid" id="devicesContainer"></div>
+        </section>
+
+        <!-- Errors Log Section -->
+        <section id="errorsSection" class="hidden">
+            <h2 class="section-title">Error Log</h2>
+            <div class="errors-list-card" id="errorsContainer"></div>
+        </section>
+
+    </main>
+
+    <script>
+        const loadingState = document.getElementById('loadingState');
+        const errorAlert = document.getElementById('errorAlert');
+        const errorMessage = document.getElementById('errorMessage');
+        const emptyAlert = document.getElementById('emptyAlert');
+        const dashboardContent = document.getElementById('dashboardContent');
+
+        const valAccepted = document.getElementById('valAccepted');
+        const valDuplicates = document.getElementById('valDuplicates');
+        const valErrors = document.getElementById('valErrors');
+
+        const devicesContainer = document.getElementById('devicesContainer');
+        const errorsSection = document.getElementById('errorsSection');
+        const errorsContainer = document.getElementById('errorsContainer');
+
+        async function fetchSummary() {
+            // Show loading, hide others
+            loadingState.classList.remove('hidden');
+            errorAlert.classList.add('hidden');
+            emptyAlert.classList.add('hidden');
+            dashboardContent.classList.add('hidden');
+
+            try {
+                const response = await fetch('/summary');
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.error || `HTTP ${response.status}: Failed to read summary`);
+                }
+
+                const data = await response.json();
+                
+                loadingState.classList.add('hidden');
+
+                // Check for empty data
+                const totals = data.totals || {};
+                const devices = data.devices || {};
+                const errors = data.errors || [];
+
+                if ((totals.accepted === 0 || totals.accepted === undefined) && Object.keys(devices).length === 0 && errors.length === 0) {
+                    emptyAlert.classList.remove('hidden');
+                    return;
+                }
+
+                // Populate dashboard
+                valAccepted.textContent = totals.accepted ?? 0;
+                valDuplicates.textContent = totals.duplicates ?? 0;
+                valErrors.textContent = totals.errors ?? errors.length ?? 0;
+
+                // Render per-device cards
+                devicesContainer.innerHTML = '';
+                const deviceKeys = Object.keys(devices);
+                if (deviceKeys.length === 0) {
+                    devicesContainer.innerHTML = '<p style="color: var(--text-secondary);">No active device records.</p>';
+                } else {
+                    deviceKeys.forEach(devId => {
+                        const dev = devices[devId];
+                        const card = document.createElement('div');
+                        card.className = 'device-card';
+                        
+                        const statusBadgeClass = dev.last_status === 'ok' ? 'badge-ok' : 'badge-error';
+
+                        card.innerHTML = `
+                            <div class="device-header">
+                                <span class="device-id">${devId}</span>
+                                <span class="badge ${statusBadgeClass}">Last Status: ${dev.last_status || 'N/A'}</span>
+                            </div>
+                            <div class="device-details">
+                                <span class="metric-label">OK Messages:</span>
+                                <span class="metric-val" style="color: var(--success-color);">${dev.ok}</span>
+                                <span class="metric-label">Error Messages:</span>
+                                <span class="metric-val" style="color: var(--danger-color);">${dev.error}</span>
+                                <span class="metric-label">Highest Sequence:</span>
+                                <span class="metric-val">${dev.last_sequence}</span>
+                            </div>
+                        `;
+                        devicesContainer.appendChild(card);
+                    });
+                }
+
+                // Render errors list if present
+                if (errors.length > 0) {
+                    errorsSection.classList.remove('hidden');
+                    errorsContainer.innerHTML = errors.map(err => `
+                        <div class="error-item">
+                            <span>Line <strong>#${err.line}</strong></span>
+                            <span class="error-tag">${err.error}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    errorsSection.classList.add('hidden');
+                }
+
+                dashboardContent.classList.remove('hidden');
+
+            } catch (err) {
+                loadingState.classList.add('hidden');
+                errorMessage.textContent = err.message;
+                errorAlert.classList.remove('hidden');
+            }
+        }
+
+        document.getElementById('refreshBtn').addEventListener('click', fetchSummary);
+        
+        // Initial fetch on load
+        fetchSummary();
+    </script>
+</body>
+</html>
